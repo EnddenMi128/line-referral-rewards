@@ -1,102 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <title>會員登記</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>會員中心</title>
+
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
   <style>
     body {
-      font-family: Arial;
-      padding: 20px;
+      font-family: Arial, sans-serif;
       background: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    .box {
+
+    .card {
       background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
     }
-    input, button {
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
       width: 100%;
       padding: 12px;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    button {
       background: #06C755;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    #loading, #success {
+      display: none;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    #success { color: green; }
+
+    #qrSection { display: none; }
+
+    img.qr {
+      width: 200px;
+      height: 200px;
+      margin: 16px auto;
+      display: block;
     }
   </style>
 </head>
+
 <body>
+  <div class="card">
 
-<div class="box">
-  <h2>填資料領10元優惠券</h2>
+    <!-- 新會員區 -->
+    <div id="joinSection" style="display:none;">
+      <h1>加入會員領 $10</h1>
+      <p>填寫姓名與電話即可領取 LINE 折價券</p>
 
-  <input id="name" placeholder="請輸入姓名">
-  <input id="phone" placeholder="請輸入電話">
+      <input id="name" placeholder="姓名" />
+      <input id="phone" placeholder="手機號碼" />
 
-  <button onclick="submitForm()">送出並領優惠券</button>
+      <button onclick="submitJoin()">送出並領取優惠</button>
 
-  <p id="msg"></p>
-</div>
+      <div id="loading">送出中，請稍候...</div>
+      <div id="success">完成！優惠券已透過 LINE 發送</div>
+    </div>
 
-<script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxDl3w29rVR73EznImE4nZ9-q0FXHbGXVOt0dCvct1i97v540YrEC786dAd-upu0k1jzw/exec";
+    <!-- 舊會員推薦區 -->
+    <div id="memberSection" style="display:none;">
+      <h1>推薦好友再拿 $10</h1>
+      <p>讓好友掃描 QR Code 填資料<br>你與好友都可獲得 $10 折價券</p>
 
-let userId = "";
-let refUserId = "";
+      <img id="qrImg" class="qr" />
 
-async function init() {
-  await liff.init({ liffId: "2009103012-Cm3dsFrN" });
+      <button onclick="copyLink()">複製推薦連結</button>
+    </div>
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
+  </div>
 
-  const profile = await liff.getProfile();
-  userId = profile.userId;
+  <script>
+    const LIFF_ID = "2009103012-Cm3dsFrN";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxDl3w29rVR73EznImE4nZ9-q0FXHbGXVOt0dCvct1i97v540YrEC786dAd-upu0k1jzw/exec";
 
-  // 讀推薦碼
-  const urlParams = new URLSearchParams(window.location.search);
-  refUserId = urlParams.get("refUserId") || "";
-}
+    let currentUserId = "";
 
-init();
+    async function init() {
+      await liff.init({ liffId: LIFF_ID });
 
-async function submitForm() {
-  const name = document.getElementById("name").value;
-  const phone = document.getElementById("phone").value;
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
 
-  if (!name || !phone) {
-    alert("請填寫姓名與電話");
-    return;
-  }
+      const profile = await liff.getProfile();
+      currentUserId = profile.userId;
 
-  const formData = new URLSearchParams();
-  formData.append("userId", userId);
-  formData.append("name", name);
-  formData.append("phone", phone);
-  formData.append("refUserId", refUserId);
+      checkMember();
+    }
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    body: formData
-  });
+    async function checkMember() {
+      const res = await fetch(GAS_URL + "?userId=" + currentUserId);
+      const data = await res.json();
 
-  const text = await res.text();
+      if (data.isMember) {
+        showMember(data.refUrl);
+      } else {
+        document.getElementById("joinSection").style.display = "block";
+      }
+    }
 
-  if (text.includes("ALREADY_MEMBER")) {
-    document.getElementById("msg").innerText = "你已經領過優惠券囉！";
-  } else {
-    document.getElementById("msg").innerText = "完成！優惠券已送到LINE 🎉";
-  }
-}
-</script>
+    function showMember(refUrl) {
+      document.getElementById("memberSection").style.display = "block";
 
+      const qr =
+        "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+        encodeURIComponent(refUrl);
+
+      document.getElementById("qrImg").src = qr;
+
+      window.refLink = refUrl;
+    }
+
+    async function submitJoin() {
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+
+      if (!name || !phone) {
+        alert("請填寫姓名與手機");
+        return;
+      }
+
+      document.getElementById("loading").style.display = "block";
+
+      const params = new URLSearchParams();
+      params.append("userId", currentUserId);
+      params.append("name", name);
+      params.append("phone", phone);
+
+      const refUserId = new URLSearchParams(location.search).get("refUserId");
+      if (refUserId) params.append("refUserId", refUserId);
+
+      await fetch(GAS_URL, { method: "POST", body: params });
+
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("success").style.display = "block";
+
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(window.refLink);
+      alert("推薦連結已複製");
+    }
+
+    init();
+  </script>
 </body>
 </html>
-
