@@ -1,55 +1,165 @@
-<script>
-  const LIFF_ID = "2009103012-Cm3dsFrN";
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzQ92BIeccYMgAdImmHMCy97oxgSMo72yQg9iOr4z7IrA5enYG1jOWrcLeGESeWO_TwoA/exec";
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>好友推薦領取優惠</title>
 
-  // ⭐ 讀網址推薦碼
-  const urlParams = new URLSearchParams(location.search);
-  const refFromUrl = urlParams.get("ref") || "";
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  async function init() {
-    await liff.init({ liffId: LIFF_ID });
-
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-  }
-  init();
-
-  async function submitForm() {
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-
-    if (!name || !phone) {
-      alert("請填寫姓名與手機");
-      return;
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
 
-    document.getElementById("loadingMsg").style.display = "block";
-
-    try {
-      const profile = await liff.getProfile();
-      const userId = profile.userId;
-
-      const params = new URLSearchParams();
-      params.append("name", name);
-      params.append("phone", phone);
-      params.append("ref", refFromUrl); // ⭐ 自動帶推薦碼
-      params.append("userId", userId);
-
-      await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: params
-      });
-
-      document.getElementById("loadingMsg").style.display = "none";
-      document.getElementById("successMsg").style.display = "block";
-
-    } catch (err) {
-      document.getElementById("loadingMsg").style.display = "none";
-      alert("送出失敗，請稍後再試");
-      console.error(err);
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
     }
-  }
-</script>
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #06C755;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    button.secondary {
+      background: #eee;
+      color: #333;
+    }
+
+    #loadingMsg, #successMsg {
+      display: none;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    #successMsg {
+      color: green;
+    }
+
+    #qrSection {
+      display: none;
+      margin-top: 16px;
+    }
+
+    img.qr {
+      width: 180px;
+      height: 180px;
+      margin: 12px auto;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>好友推薦領優惠</h1>
+    <p>填寫資料即可領取優惠券。<br>也可以分享給好友一起拿折扣！</p>
+
+    <!-- 填寫資料 -->
+    <div id="formSection">
+      <input id="name" placeholder="姓名" />
+      <input id="phone" placeholder="手機號碼" />
+
+      <button onclick="submitForm()">送出並領優惠</button>
+
+      <div id="loadingMsg">送出中，請稍候...</div>
+      <div id="successMsg">送出成功！優惠券將透過 LINE 發送給您。</div>
+    </div>
+
+    <!-- 推薦好友 -->
+    <button class="secondary" onclick="showQR()">推薦好友</button>
+
+    <div id="qrSection">
+      <p>請好友掃描下方 QR Code<br>即可填資料領優惠</p>
+      <img
+        class="qr"
+        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://liff.line.me/2009103012-Cm3dsFrN"
+        alt="推薦QR Code"
+      />
+    </div>
+  </div>
+
+  <script>
+    const LIFF_ID = "2009103012-Cm3dsFrN";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQ92BIeccYMgAdImmHMCy97oxgSMo72yQg9iOr4z7IrA5enYG1jOWrcLeGESeWO_TwoA/exec";
+
+    async function init() {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+    }
+    init();
+
+    function showQR() {
+      document.getElementById("qrSection").style.display = "block";
+    }
+
+    async function submitForm() {
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+
+      if (!name || !phone) {
+        alert("請填寫姓名與手機");
+        return;
+      }
+
+      document.getElementById("loadingMsg").style.display = "block";
+
+      try {
+        const profile = await liff.getProfile();
+        const userId = profile.userId;
+
+        const params = new URLSearchParams();
+        params.append("name", name);
+        params.append("phone", phone);
+        params.append("userId", userId);
+
+        await fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: params
