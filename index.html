@@ -1,29 +1,44 @@
-const SHEET_NAME = "工作表1";
+<script>
+const LIFF_ID = "2009103012-Cm3dsFrN";
 
-function doPost(e) {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycby1kIzG3ZHrCnlgHchLzwhaT_HQqeUUMkjSs-58-pOOyig8KJNy_0s69zIhtSfT3p5F_Q/exec";
 
-    const name = e.parameter.name;
-    const phone = e.parameter.phone;
-    const ref = e.parameter.ref;
-    const userId = e.parameter.userId;
+async function init() {
+  await liff.init({ liffId: LIFF_ID });
 
-    sheet.appendRow([
-      new Date(),
-      name,
-      phone,
-      ref,
-      userId
-    ]);
-
-    return ContentService
-      .createTextOutput("OK")
-      .setMimeType(ContentService.MimeType.TEXT);
-
-  } catch (err) {
-    return ContentService
-      .createTextOutput("ERROR: " + err)
-      .setMimeType(ContentService.MimeType.TEXT);
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
 }
+init();
+
+async function submitForm() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const ref = document.getElementById("ref").value.trim();
+
+  if (!name || !phone) {
+    alert("請填寫姓名與手機");
+    return;
+  }
+
+  const profile = await liff.getProfile();
+  const userId = profile.userId;
+
+  const params = new URLSearchParams();
+  params.append("name", name);
+  params.append("phone", phone);
+  params.append("ref", ref);
+  params.append("userId", userId);
+
+  await fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: params
+  });
+
+  document.getElementById("successMsg").style.display = "block";
+}
+</script>
