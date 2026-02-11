@@ -63,6 +63,11 @@
       margin-top: 8px;
     }
 
+    button:disabled {
+      background: #9adbb5;
+      cursor: not-allowed;
+    }
+
     #loading, #success {
       display: none;
       margin-top: 12px;
@@ -93,7 +98,7 @@
       <input id="name" placeholder="姓名" />
       <input id="phone" placeholder="手機號碼" />
 
-      <button onclick="submitJoin()">送出並領取優惠</button>
+      <button id="joinBtn" onclick="submitJoin()">送出並領取優惠</button>
 
       <div id="loading">送出中，請稍候...</div>
       <div id="success">完成！優惠券已透過 LINE 發送</div>
@@ -113,76 +118,107 @@
 
   <script>
     const LIFF_ID = "2009103012-Cm3dsFrN";
-    const GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiAcctlwp1zIzT5B6YVSAqiJX9kGbMv4Ru0PNpu5LLqvPEdA0sj9iuEX9Vzo-K33z4bXQJIN8jF62KUrtG4x44tqjS2VIBEhX7s5fMXE53pK46zAfH8O6oQ1bvmk1LIetBJaP_k-qVMLYmkomWS_-576rg3CzLp2le6QxA-fyS72r0wDkagCgEytZ71m5l5cTngRRchzJn7sLeaOBg31my9Ud-z7-DmuWCzzUkKizcaiT7bSbxuTZFWIYcd89wsfz5BoHLY_RjOmhgK2pBlnN_VVAAmJUhjfXfJ34zk&lib=MJt2xsn7iidfQlyr5oQFqCHSpsObgOc6L";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzC-fcTlke2UEpRK9_voSptKZi-Msrk6qesV28XIfJ11xOnS60Vvj4HDpOzmMvxxJM2BQ/exec";
 
     let currentUserId = "";
+    let refLink = "";
 
     async function init() {
-      await liff.init({ liffId: LIFF_ID });
+      try {
+        await liff.init({ liffId: LIFF_ID });
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        currentUserId = profile.userId;
+
+        await checkMember();
+      } catch (err) {
+        alert("LIFF 初始化失敗，請重新開啟");
       }
-
-      const profile = await liff.getProfile();
-      currentUserId = profile.userId;
-
-      checkMember();
     }
 
     async function checkMember() {
-      const res = await fetch(GAS_URL + "?userId=" + currentUserId);
-      const data = await res.json();
+      try {
+        const res = await fetch(GAS_URL + "?userId=" + currentUserId);
+        const data = await res.json();
 
-      if (data.isMember) {
-        showMember(data.refUrl);
-      } else {
-        document.getElementById("joinSection").style.display = "block";
+        if (data.isMember) {
+          showMember(data.refUrl);
+        } else {
+          document.getElementById("joinSection").style.display = "block";
+        }
+      } catch (err) {
+        alert("系統忙碌中，請稍後再開啟");
       }
     }
 
-    function showMember(refUrl) {
+    function showMember(url) {
+      document.getElementById("joinSection").style.display = "none";
       document.getElementById("memberSection").style.display = "block";
+
+      refLink = url;
 
       const qr =
         "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
-        encodeURIComponent(refUrl);
+        encodeURIComponent(url);
 
       document.getElementById("qrImg").src = qr;
-
-      window.refLink = refUrl;
     }
 
     async function submitJoin() {
       const name = document.getElementById("name").value.trim();
       const phone = document.getElementById("phone").value.trim();
+      const btn = document.getElementById("joinBtn");
 
       if (!name || !phone) {
         alert("請填寫姓名與手機");
         return;
       }
 
+      btn.disabled = true;
       document.getElementById("loading").style.display = "block";
 
-      const params = new URLSearchParams();
-      params.append("userId", currentUserId);
-      params.append("name", name);
-      params.append("phone", phone);
+      try {
+        const params = new URLSearchParams();
+        params.append("userId", currentUserId);
+        params.append("name", name);
+        params.append("phone", phone);
 
-      const refUserId = new URLSearchParams(location.search).get("refUserId");
-      if (refUserId) params.append("refUserId", refUserId);
+        const refUserId = new URLSearchParams(location.search).get("refUserId");
+        if (refUserId) params.append("refUserId", refUserId);
 
-      await fetch(GAS_URL, { method: "POST", body: params });
+        const res = await fetch(GAS_URL, { method: "POST", body: params });
+        const data = await res.json();
 
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("success").style.display = "block";
+        document.getElementById("loading").style.display = "none";
 
-      setTimeout(() => location.reload(), 1500);
+        if (data.status === "ALREADY_MEMBER") {
+          alert("你已經是會員囉！");
+          location.reload();
+          return;
+        }
+
+        if (data.status === "OK") {
+          document.getElementById("success").style.display = "block";
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          alert("發生錯誤，請稍後再試");
+        }
+      } catch (err) {
+        alert("送出失敗，請稍後再試");
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function copyLink() {
-      navigator.clipboard.writeText(window.refLink);
+      if (!refLink) return;
+
+      navigator.clipboard.writeText(refLink);
       alert("推薦連結已複製");
     }
 
@@ -190,6 +226,3 @@
   </script>
 </body>
 </html>
-
-
-
