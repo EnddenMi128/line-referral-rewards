@@ -1,157 +1,55 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>加入會員 或 推薦好友 享 $10 折扣</title>
+<script>
+  const LIFF_ID = "2009103012-Cm3dsFrN";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzQ92BIeccYMgAdImmHMCy97oxgSMo72yQg9iOr4z7IrA5enYG1jOWrcLeGESeWO_TwoA/exec";
 
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  // ⭐ 讀網址推薦碼
+  const urlParams = new URLSearchParams(location.search);
+  const refFromUrl = urlParams.get("ref") || "";
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+  async function init() {
+    await liff.init({ liffId: LIFF_ID });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+  }
+  init();
+
+  async function submitForm() {
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (!name || !phone) {
+      alert("請填寫姓名與手機");
+      return;
     }
 
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 400px;
+    document.getElementById("loadingMsg").style.display = "block";
+
+    try {
+      const profile = await liff.getProfile();
+      const userId = profile.userId;
+
+      const params = new URLSearchParams();
+      params.append("name", name);
+      params.append("phone", phone);
+      params.append("ref", refFromUrl); // ⭐ 自動帶推薦碼
+      params.append("userId", userId);
+
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: params
+      });
+
+      document.getElementById("loadingMsg").style.display = "none";
+      document.getElementById("successMsg").style.display = "block";
+
+    } catch (err) {
+      document.getElementById("loadingMsg").style.display = "none";
+      alert("送出失敗，請稍後再試");
+      console.error(err);
     }
-
-    h1 {
-      font-size: 20px;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    p {
-      font-size: 14px;
-      color: #666;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #06C755;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      background: #ccc;
-    }
-
-    #loadingMsg, #successMsg {
-      display: none;
-      text-align: center;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    #successMsg {
-      color: green;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="card">
-    <h1>推薦好友拿 $10 折扣</h1>
-    <p>填寫資料後，<br>只有「有填推薦碼」的人才會收到折扣券。</p>
-
-    <input id="name" placeholder="姓名" />
-    <input id="phone" placeholder="手機號碼" />
-    <input id="ref" placeholder="推薦碼（沒有可留空）" />
-
-    <button onclick="submitForm()">送出並領折扣</button>
-
-    <div id="loadingMsg">送出中，請稍候...</div>
-    <div id="successMsg">送出成功！若符合條件將收到 LINE 折扣碼。</div>
-  </div>
-
-  <script>
-    const LIFF_ID = "2009103012-Cm3dsFrN";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQ92BIeccYMgAdImmHMCy97oxgSMo72yQg9iOr4z7IrA5enYG1jOWrcLeGESeWO_TwoA/exec
-    ";
-
-    async function init() {
-      await liff.init({ liffId: LIFF_ID });
-
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-    }
-    init();
-
-    async function submitForm() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const ref = document.getElementById("ref").value.trim();
-
-      if (!name || !phone) {
-        alert("請填寫姓名與手機");
-        return;
-      }
-
-      document.getElementById("loadingMsg").style.display = "block";
-
-      try {
-        const profile = await liff.getProfile();
-        const userId = profile.userId;
-
-        const params = new URLSearchParams();
-        params.append("name", name);
-        params.append("phone", phone);
-        params.append("ref", ref);
-        params.append("userId", userId);
-
-        await fetch(GAS_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: params
-        });
-
-        document.getElementById("loadingMsg").style.display = "none";
-        document.getElementById("successMsg").style.display = "block";
-
-      } catch (err) {
-        document.getElementById("loadingMsg").style.display = "none";
-        alert("送出失敗，請稍後再試");
-        console.error(err);
-      }
-    }
-  </script>
-</body>
-</html>
-
-
-
-
-
-
+  }
+</script>
