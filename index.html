@@ -1,134 +1,29 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>食便宜蔬果商行｜推薦獎勵</title>
+const SHEET_NAME = "工作表1";
 
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-      background: #f6f7fb;
-      margin: 0;
-      padding: 20px;
-    }
-    .card {
-      max-width: 480px;
-      margin: auto;
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-    h1 { font-size: 22px; margin-bottom: 8px; }
-    p { color: #666; font-size: 14px; }
-    label { display: block; margin-top: 16px; font-size: 14px; font-weight: 600; }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      font-size: 16px;
-    }
-    button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      background: #06c755;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .success {
-      display: none;
-      text-align: center;
-      margin-top: 20px;
-      color: #06c755;
-      font-weight: bold;
-    }
-  </style>
-</head>
+    const name = e.parameter.name;
+    const phone = e.parameter.phone;
+    const ref = e.parameter.ref;
+    const userId = e.parameter.userId;
 
-<body>
-  <div class="card">
-    <h1>推薦好友拿 $10 折扣</h1>
-    <p>填寫資料後，新客與推薦人都會收到折扣券。</p>
+    sheet.appendRow([
+      new Date(),
+      name,
+      phone,
+      ref,
+      userId
+    ]);
 
-    <label>姓名</label>
-    <input id="name" placeholder="請輸入姓名" />
+    return ContentService
+      .createTextOutput("OK")
+      .setMimeType(ContentService.MimeType.TEXT);
 
-    <label>手機</label>
-    <input id="phone" placeholder="請輸入手機" />
-
-    <label>推薦人客編（沒有可留空）</label>
-    <input id="ref" placeholder="例如 SPY2601" />
-
-    <button onclick="submitForm()">送出並領折扣</button>
-
-    <div class="success" id="successMsg">
-      送出成功！折扣券已發送到 LINE 🎉
-    </div>
-  </div>
-
-  <script>
-    const LIFF_ID = "2009103012-Cm3dsFrN";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzejEkfvLfujM_4J__dtbK-86Aeup_SL3wo-VW-SjeGXDp1MK-ERcW2dGiu-bVyI80ABQ/exec";
-
-    async function init() {
-      await liff.init({ liffId: LIFF_ID });
-
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-    }
-
-    init();
-
-    async function submitForm() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const ref = document.getElementById("ref").value.trim();
-
-      if (!name || !phone) {
-        alert("請填寫姓名與手機");
-        return;
-      }
-
-      const profile = await liff.getProfile();
-      const userId = profile.userId;
-
-      try {
-        // ⭐ 用表單格式送到 GAS（關鍵）
-        const params = new URLSearchParams();
-        params.append("name", name);
-        params.append("phone", phone);
-        params.append("ref", ref);
-        params.append("userId", userId);
-
-        await fetch(GAS_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: params
-        });
-
-        document.getElementById("successMsg").style.display = "block";
-
-      } catch (err) {
-        alert("送出失敗，請稍後再試");
-        console.error(err);
-      }
-    }
-  </script>
-</body>
-</html>
-
-
-
+  } catch (err) {
+    return ContentService
+      .createTextOutput("ERROR: " + err)
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+}
