@@ -468,45 +468,4 @@
 
     init();
 
-    async function submitForm() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const ref = document.getElementById("ref").value.trim();
-
-      if (!name || !phone) {
-        alert("請填寫姓名與手機");
-        return;
-      }
-
-      document.getElementById("loadingMsg").style.display = "block";
-
-      try {
-        const profile = await liff.getProfile();
-        const userId = profile.userId;
-
-        const params = new URLSearchParams();
-        params.append("name", name);
-        params.append("phone", phone);
-        params.append("ref", ref);
-        params.append("userId", userId);
-
-        await fetch(GAS_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: params
-        });
-
-        document.getElementById("loadingMsg").style.display = "none";
-        document.getElementById("successMsg").style.display = "block";
-
-      } catch (err) {
-        document.getElementById("loadingMsg").style.display = "none";
-        alert("送出失敗，請稍後再試");
-        console.error(err);
-      }
-    }
-  </script>
-</body>
-</html>
-
 
