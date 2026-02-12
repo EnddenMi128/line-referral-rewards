@@ -71,6 +71,7 @@ button {
 <!-- 新會員區 -->
 <div id="joinSection" style="display:none;">
 <h2>加入會員</h2>
+<p>填寫姓名與電話即可領取 LINE 折價券</p>
 <input id="name" placeholder="姓名"/>
 <input id="phone" placeholder="手機號碼"/>
 <button onclick="submitJoin()">送出並加入</button>
@@ -79,6 +80,7 @@ button {
 <!-- 舊會員推薦區 -->
 <div id="memberSection" style="display:none;">
 <h2>推薦好友拿獎勵</h2>
+<p>讓好友掃描 QR Code 填資料，你與好友都可獲得 $10 折價券</p>
 <img id="qrImg" width="200"/>
 <button onclick="copyLink()">複製推薦連結</button>
 </div>
@@ -97,6 +99,8 @@ button {
 <script>
 const LIFF_ID = "2009103012-Cm3dsFrN";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
+
+// 你的舊群專屬雞蛋兌換券連結
 const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
@@ -166,8 +170,10 @@ async function submitJoin() {
     // 隱藏填資料
     document.getElementById("joinSection").style.display = "none";
 
-    // 顯示社群彈窗
-    showSocialModal();
+    // 如果是舊群專屬連結，顯示雞蛋兌換券社群彈窗
+    if (campaign === "social") {
+      showSocialModal();
+    }
 
   } else {
     alert("發生錯誤，請稍後再試");
