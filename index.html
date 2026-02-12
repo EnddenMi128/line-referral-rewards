@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>會員中心</title>
 
+<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
@@ -14,6 +15,7 @@ input,button { width:100%; padding:12px; margin-top:10px; border-radius:8px; fon
 button { background:#06C755; color:white; border:none; cursor:pointer; }
 .modal { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; }
 .modal-box { background:white; padding:24px; border-radius:16px; text-align:center; width:85%; max-width:360px; }
+img.qr { width:200px; margin:16px auto; display:block; }
 </style>
 </head>
 
@@ -21,26 +23,29 @@ button { background:#06C755; color:white; border:none; cursor:pointer; }
 
 <div class="card">
 
-<div id="joinSection" style="display:none;">
-<h2>加入會員</h2>
-<p>填寫姓名與電話即可領取 LINE 折價券</p>
-<input id="name" placeholder="姓名"/>
-<input id="phone" placeholder="手機號碼"/>
-<button onclick="submitJoin()">送出並加入</button>
+  <!-- 新會員區 -->
+  <div id="joinSection" style="display:none;">
+    <h2>加入會員</h2>
+    <p>填寫姓名與電話即可領取 LINE 折價券</p>
+    <input id="name" placeholder="姓名"/>
+    <input id="phone" placeholder="手機號碼"/>
+    <button onclick="submitJoin()">送出並加入</button>
+  </div>
+
+  <!-- 舊會員推薦區 -->
+  <div id="memberSection" style="display:none;">
+    <h2>推薦好友拿獎勵</h2>
+    <p>讓好友掃描 QR Code 填資料，你與好友都可獲得 $10 折價券</p>
+    <img id="qrImg" class="qr"/>
+    <button onclick="copyLink()">複製推薦連結</button>
+  </div>
+
 </div>
 
-<div id="memberSection" style="display:none;">
-<h2>推薦好友拿獎勵</h2>
-<p>讓好友掃描 QR Code 填資料，你與好友都可獲得 $10 折價券</p>
-<img id="qrImg" width="200"/>
-<button onclick="copyLink()">複製推薦連結</button>
-</div>
-
-</div>
-
+<!-- 社群彈窗 -->
 <div id="socialModal" class="modal">
   <div class="modal-box">
-    <h3>🎉 歡迎加入會員</h3>
+    <h3>🎉 舊群專屬</h3>
     <p>點下方按鈕加入官方社群<br>接收最新優惠通知 👇</p>
     <button onclick="openSocial()">立即加入社群</button>
   </div>
@@ -48,14 +53,14 @@ button { background:#06C755; color:white; border:none; cursor:pointer; }
 
 <script>
 const LIFF_ID = "2009103012-Cm3dsFrN";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx_QmVyErdSFBzTg3k_fV9tCflF8w2NAur9Xfbchcf7DnG2m8vFukn6pV1aH_MNoMqJSA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwsXTShYqDQl9r9QnGa5Eei0Vjb_EVmw_8HJYwREVhiYUBNI3s4Kux32bfVA_SW_hSIVQ/exec";
 const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
 let refLink = "";
 let campaign = "";
 
-// 儲存 URL 參數到 localStorage（登入前）
+// 儲存 URL 參數到 localStorage
 (function saveParamsBeforeLogin() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("campaign")) localStorage.setItem("campaign", params.get("campaign"));
@@ -124,7 +129,7 @@ async function submitJoin() {
   if (data.status === "OK" || data.status === "ALREADY_MEMBER") {
     document.getElementById("joinSection").style.display = "none";
 
-    // 只要是舊群專屬 campaign，就跳社群
+    // 只對舊群專屬連結跳社群
     if (campaign === "social") { showSocialModal(); }
   } else { alert("發生錯誤，請稍後再試"); }
 }
