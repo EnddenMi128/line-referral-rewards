@@ -68,13 +68,15 @@ button {
 
 <div class="card">
 
+<!-- 新會員區 -->
 <div id="joinSection" style="display:none;">
 <h2>加入會員</h2>
 <input id="name" placeholder="姓名"/>
 <input id="phone" placeholder="手機號碼"/>
-<button onclick="submitJoin()">送出並完成加入</button>
+<button onclick="submitJoin()">送出並加入</button>
 </div>
 
+<!-- 舊會員推薦區 -->
 <div id="memberSection" style="display:none;">
 <h2>推薦好友拿獎勵</h2>
 <img id="qrImg" width="200"/>
@@ -86,8 +88,8 @@ button {
 <!-- 社群彈窗 -->
 <div id="socialModal" class="modal">
   <div class="modal-box">
-    <h3>🎉 歡迎加入會員！</h3>
-    <p>立刻加入官方 LINE 社群，獲得更多優惠與消息 👇</p>
+    <h3>🎉 歡迎加入會員</h3>
+    <p>點下方按鈕加入官方社群<br>接收最新優惠通知 👇</p>
     <button onclick="openSocial()">立即加入社群</button>
   </div>
 </div>
@@ -95,8 +97,7 @@ button {
 <script>
 const LIFF_ID = "2009103012-Cm3dsFrN";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
-
-const SOCIAL_URL = "https://lin.ee/Oo4hXKk"; // 🔥 你的社群連結
+const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
 let refLink = "";
@@ -160,22 +161,30 @@ async function submitJoin() {
   const res = await fetch(GAS_URL, { method:"POST", body:params });
   const data = await res.json();
 
-  if (data.status === "OK") {
-    showSocialModal(); // ✨ 成功加入後一定跳出社群
-  } else if (data.status === "ALREADY_MEMBER") {
-    showSocialModal(); // ✨ 也是直接跳出社群
+  if (data.status === "OK" || data.status === "ALREADY_MEMBER") {
+
+    // 隱藏填資料
+    document.getElementById("joinSection").style.display = "none";
+
+    // 顯示社群彈窗
+    showSocialModal();
+
   } else {
     alert("發生錯誤，請稍後再試");
   }
 }
 
-/* 社群彈窗控制 */
+/* 社群控制 */
+
 function showSocialModal() {
   document.getElementById("socialModal").style.display = "flex";
 }
 
 function openSocial() {
-  window.open(SOCIAL_URL, "_blank");
+  liff.openWindow({
+    url: SOCIAL_URL,
+    external: true
+  });
 }
 
 function copyLink() {
