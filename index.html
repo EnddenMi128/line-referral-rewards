@@ -43,7 +43,6 @@ button {
   cursor:pointer;
 }
 
-/* 社群彈窗 */
 .modal {
   position:fixed;
   inset:0;
@@ -100,12 +99,13 @@ button {
 const LIFF_ID = "2009103012-Cm3dsFrN";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
 
-// 你的舊群專屬雞蛋兌換券連結
+// 舊群專屬雞蛋兌換券連結
 const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
 let refLink = "";
 
+// 初始化 LIFF
 async function init() {
   await liff.init({ liffId: LIFF_ID });
 
@@ -120,6 +120,7 @@ async function init() {
   checkMember();
 }
 
+// 檢查會員
 async function checkMember() {
   const res = await fetch(GAS_URL + "?userId=" + currentUserId);
   const data = await res.json();
@@ -131,6 +132,7 @@ async function checkMember() {
   }
 }
 
+// 顯示舊會員推薦區
 function showMember(url) {
   document.getElementById("memberSection").style.display = "block";
   document.getElementById("joinSection").style.display = "none";
@@ -141,6 +143,7 @@ function showMember(url) {
     encodeURIComponent(url);
 }
 
+// 提交新會員資料
 async function submitJoin() {
   const nm = document.getElementById("name").value.trim();
   const ph = document.getElementById("phone").value.trim();
@@ -157,7 +160,7 @@ async function submitJoin() {
 
   const urlParams = new URLSearchParams(location.search);
   const refUserId = urlParams.get("refUserId");
-  const campaign = urlParams.get("campaign");
+  const campaign = urlParams.get("campaign"); // 只有舊群專屬連結才帶這個
 
   if (refUserId) params.append("refUserId", refUserId);
   if (campaign) params.append("campaign", campaign);
@@ -166,11 +169,10 @@ async function submitJoin() {
   const data = await res.json();
 
   if (data.status === "OK" || data.status === "ALREADY_MEMBER") {
-
     // 隱藏填資料
     document.getElementById("joinSection").style.display = "none";
 
-    // 如果是舊群專屬連結，顯示雞蛋兌換券社群彈窗
+    // 只有舊群專屬連結才跳雞蛋兌換券社群彈窗
     if (campaign === "social") {
       showSocialModal();
     }
@@ -180,12 +182,12 @@ async function submitJoin() {
   }
 }
 
-/* 社群控制 */
-
+// 顯示社群彈窗
 function showSocialModal() {
   document.getElementById("socialModal").style.display = "flex";
 }
 
+// 開啟 LINE 社群
 function openSocial() {
   liff.openWindow({
     url: SOCIAL_URL,
@@ -193,6 +195,7 @@ function openSocial() {
   });
 }
 
+// 複製推薦連結
 function copyLink() {
   navigator.clipboard.writeText(refLink);
   alert("推薦連結已複製");
