@@ -1,234 +1,190 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>會員中心</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>會員中心</title>
 
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
+<style>
+body {
+  font-family: Arial;
+  background:#f7f7f7;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  margin:0;
+}
 
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
-    }
+.card {
+  background:white;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  width:90%;
+  max-width:420px;
+  text-align:center;
+}
 
-    h1 {
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
+input,button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  font-size:14px;
+}
 
-    p {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
+button {
+  background:#06C755;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
-    }
+/* 社群彈窗 */
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
 
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #06C755;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-
-    button:disabled {
-      background: #9adbb5;
-      cursor: not-allowed;
-    }
-
-    #loading, #success {
-      display: none;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    #success { color: green; }
-
-    #qrSection { display: none; }
-
-    img.qr {
-      width: 200px;
-      height: 200px;
-      margin: 16px auto;
-      display: block;
-    }
-  </style>
+.modal-box {
+  background:white;
+  padding:24px;
+  border-radius:16px;
+  text-align:center;
+  width:85%;
+  max-width:360px;
+}
+</style>
 </head>
 
 <body>
-  <div class="card">
 
-    <!-- 新會員區 -->
-    <div id="joinSection" style="display:none;">
-      <h1>加入會員領優惠</h1>
-      <p>填寫姓名與電話即可領取 LINE 優惠券</p>
+<div class="card">
 
-      <input id="name" placeholder="姓名" />
-      <input id="phone" placeholder="手機號碼" />
+<div id="joinSection" style="display:none;">
+<h2>加入會員</h2>
+<input id="name" placeholder="姓名"/>
+<input id="phone" placeholder="手機號碼"/>
+<button onclick="submitJoin()">送出並完成加入</button>
+</div>
 
-      <button id="joinBtn" onclick="submitJoin()">送出並領取優惠</button>
+<div id="memberSection" style="display:none;">
+<h2>推薦好友拿獎勵</h2>
+<img id="qrImg" width="200"/>
+<button onclick="copyLink()">複製推薦連結</button>
+</div>
 
-      <div id="loading">送出中，請稍候...</div>
-      <div id="success">完成！優惠券已透過 LINE 發送</div>
-    </div>
+</div>
 
-    <!-- 舊會員推薦區 -->
-    <div id="memberSection" style="display:none;">
-      <h1>推薦好友拿獎勵</h1>
-      <p>讓好友掃描 QR Code 填資料<br>你與好友都可獲得優惠券</p>
-
-      <img id="qrImg" class="qr" />
-
-      <button onclick="copyLink()">複製推薦連結</button>
-    </div>
-
+<!-- 社群彈窗 -->
+<div id="socialModal" class="modal">
+  <div class="modal-box">
+    <h3>🎉 歡迎加入會員！</h3>
+    <p>立刻加入官方 LINE 社群，獲得更多優惠與消息 👇</p>
+    <button onclick="openSocial()">立即加入社群</button>
   </div>
+</div>
 
-  <script>
-    const LIFF_ID = "2009103012-Cm3dsFrN";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyL9yGouTL-RR0ImE8AqvMJ0K52FUMZZhclyeV7mlsfMpz7iqPbFKFpuuXeoxJJSM_wbg/exec";
+<script>
+const LIFF_ID = "2009103012-Cm3dsFrN";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
 
-    let currentUserId = "";
-    let refLink = "";
+const SOCIAL_URL = "https://lin.ee/Oo4hXKk"; // 🔥 你的社群連結
 
-    async function init() {
-      try {
-        await liff.init({ liffId: LIFF_ID });
+let currentUserId = "";
+let refLink = "";
 
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
+async function init() {
+  await liff.init({ liffId: LIFF_ID });
 
-        const profile = await liff.getProfile();
-        currentUserId = profile.userId;
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
-        await checkMember();
-      } catch (err) {
-        alert("LIFF 初始化失敗，請重新開啟");
-      }
-    }
+  const profile = await liff.getProfile();
+  currentUserId = profile.userId;
 
-    async function checkMember() {
-      try {
-        const res = await fetch(GAS_URL + "?userId=" + currentUserId);
-        const data = await res.json();
+  checkMember();
+}
 
-        if (data.isMember) {
-          showMember(data.refUrl);
-        } else {
-          document.getElementById("joinSection").style.display = "block";
-        }
-      } catch (err) {
-        alert("系統忙碌中，請稍後再開啟");
-      }
-    }
+async function checkMember() {
+  const res = await fetch(GAS_URL + "?userId=" + currentUserId);
+  const data = await res.json();
 
-    function showMember(url) {
-      document.getElementById("joinSection").style.display = "none";
-      document.getElementById("memberSection").style.display = "block";
+  if (data.isMember) {
+    showMember(data.refUrl);
+  } else {
+    document.getElementById("joinSection").style.display = "block";
+  }
+}
 
-      refLink = url;
+function showMember(url) {
+  document.getElementById("memberSection").style.display = "block";
+  document.getElementById("joinSection").style.display = "none";
 
-      const qr =
-        "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
-        encodeURIComponent(url);
+  refLink = url;
+  document.getElementById("qrImg").src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+    encodeURIComponent(url);
+}
 
-      document.getElementById("qrImg").src = qr;
-    }
+async function submitJoin() {
+  const nm = document.getElementById("name").value.trim();
+  const ph = document.getElementById("phone").value.trim();
 
-    async function submitJoin() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const btn = document.getElementById("joinBtn");
+  if (!nm || !ph) {
+    alert("請填寫姓名與手機號碼");
+    return;
+  }
 
-      if (!name || !phone) {
-        alert("請填寫姓名與手機");
-        return;
-      }
+  const params = new URLSearchParams();
+  params.append("userId", currentUserId);
+  params.append("name", nm);
+  params.append("phone", ph);
 
-      btn.disabled = true;
-      document.getElementById("loading").style.display = "block";
+  const urlParams = new URLSearchParams(location.search);
+  const refUserId = urlParams.get("refUserId");
+  const campaign = urlParams.get("campaign");
 
-      try {
-        const params = new URLSearchParams();
-        params.append("userId", currentUserId);
-        params.append("name", name);
-        params.append("phone", phone);
+  if (refUserId) params.append("refUserId", refUserId);
+  if (campaign) params.append("campaign", campaign);
 
-        // ✅ 讀取網址參數（推薦 + 社群活動）
-        const urlParams = new URLSearchParams(location.search);
+  const res = await fetch(GAS_URL, { method:"POST", body:params });
+  const data = await res.json();
 
-        const refUserId = urlParams.get("refUserId");
-        if (refUserId) params.append("refUserId", refUserId);
+  if (data.status === "OK") {
+    showSocialModal(); // ✨ 成功加入後一定跳出社群
+  } else if (data.status === "ALREADY_MEMBER") {
+    showSocialModal(); // ✨ 也是直接跳出社群
+  } else {
+    alert("發生錯誤，請稍後再試");
+  }
+}
 
-        const campaign = urlParams.get("campaign");
-        if (campaign) params.append("campaign", campaign);
+/* 社群彈窗控制 */
+function showSocialModal() {
+  document.getElementById("socialModal").style.display = "flex";
+}
 
-        const res = await fetch(GAS_URL, { method: "POST", body: params });
-        const data = await res.json();
+function openSocial() {
+  window.open(SOCIAL_URL, "_blank");
+}
 
-        document.getElementById("loading").style.display = "none";
+function copyLink() {
+  navigator.clipboard.writeText(refLink);
+  alert("推薦連結已複製");
+}
 
-        if (data.status === "ALREADY_MEMBER") {
-          alert("你已經是會員囉！");
-          location.reload();
-          return;
-        }
+init();
+</script>
 
-        if (data.status === "OK") {
-          document.getElementById("success").style.display = "block";
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          alert("發生錯誤，請稍後再試");
-        }
-      } catch (err) {
-        alert("送出失敗，請稍後再試");
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function copyLink() {
-      if (!refLink) return;
-
-      navigator.clipboard.writeText(refLink);
-      alert("推薦連結已複製");
-    }
-
-    init();
-  </script>
 </body>
 </html>
