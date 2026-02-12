@@ -92,8 +92,8 @@
 
     <!-- 新會員區 -->
     <div id="joinSection" style="display:none;">
-      <h1>加入會員領 $10</h1>
-      <p>填寫姓名與電話即可領取 LINE 折價券</p>
+      <h1>加入會員領優惠</h1>
+      <p>填寫姓名與電話即可領取 LINE 優惠券</p>
 
       <input id="name" placeholder="姓名" />
       <input id="phone" placeholder="手機號碼" />
@@ -106,8 +106,8 @@
 
     <!-- 舊會員推薦區 -->
     <div id="memberSection" style="display:none;">
-      <h1>推薦好友再拿 $10</h1>
-      <p>讓好友掃描 QR Code 填資料<br>你與好友都可獲得 $10 折價券</p>
+      <h1>推薦好友拿獎勵</h1>
+      <p>讓好友掃描 QR Code 填資料<br>你與好友都可獲得優惠券</p>
 
       <img id="qrImg" class="qr" />
 
@@ -118,7 +118,7 @@
 
   <script>
     const LIFF_ID = "2009103012-Cm3dsFrN";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyL9yGouTL-RR0ImE8AqvMJ0K52FUMZZhclyeV7mlsfMpz7iqPbFKFpuuXeoxJJSM_wbg/exec";
 
     let currentUserId = "";
     let refLink = "";
@@ -188,8 +188,14 @@
         params.append("name", name);
         params.append("phone", phone);
 
-        const refUserId = new URLSearchParams(location.search).get("refUserId");
+        // ✅ 讀取網址參數（推薦 + 社群活動）
+        const urlParams = new URLSearchParams(location.search);
+
+        const refUserId = urlParams.get("refUserId");
         if (refUserId) params.append("refUserId", refUserId);
+
+        const campaign = urlParams.get("campaign");
+        if (campaign) params.append("campaign", campaign);
 
         const res = await fetch(GAS_URL, { method: "POST", body: params });
         const data = await res.json();
@@ -226,4 +232,3 @@
   </script>
 </body>
 </html>
-
