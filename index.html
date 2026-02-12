@@ -48,32 +48,25 @@ button { background:#06C755; color:white; border:none; cursor:pointer; }
 
 <script>
 const LIFF_ID = "2009103012-Cm3dsFrN";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx_QmVyErdSFBzTg3k_fV9tCflF8w2NAur9Xfbchcf7DnG2m8vFukn6pV1aH_MNoMqJSA/exec";
 const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
 let refLink = "";
 let campaign = "";
 
-// 取得 URL 參數
-function getUrlParams() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return {
-    refUserId: urlParams.get("refUserId"),
-    campaign: urlParams.get("campaign")
-  };
-}
+// 儲存 URL 參數到 localStorage（登入前）
+(function saveParamsBeforeLogin() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("campaign")) localStorage.setItem("campaign", params.get("campaign"));
+  if (params.get("refUserId")) localStorage.setItem("refUserId", params.get("refUserId"));
+})();
 
 // 初始化 LIFF
 async function init() {
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isLoggedIn()) {
-    // 登入前先存 URL 參數
-    const params = getUrlParams();
-    if (params.campaign) localStorage.setItem("campaign", params.campaign);
-    if (params.refUserId) localStorage.setItem("refUserId", params.refUserId);
-
     liff.login();
     return;
   }
@@ -81,10 +74,9 @@ async function init() {
   const profile = await liff.getProfile();
   currentUserId = profile.userId;
 
-  // LIFF 登入後取 URL 或 localStorage
-  const params = getUrlParams();
-  campaign = params.campaign || localStorage.getItem("campaign") || "";
-  const refUserId = params.refUserId || localStorage.getItem("refUserId") || "";
+  // 登入後取 localStorage
+  campaign = localStorage.getItem("campaign") || "";
+  const refUserId = localStorage.getItem("refUserId") || "";
 
   checkMember(refUserId);
 }
@@ -131,6 +123,8 @@ async function submitJoin() {
 
   if (data.status === "OK" || data.status === "ALREADY_MEMBER") {
     document.getElementById("joinSection").style.display = "none";
+
+    // 只要是舊群專屬 campaign，就跳社群
     if (campaign === "social") { showSocialModal(); }
   } else { alert("發生錯誤，請稍後再試"); }
 }
