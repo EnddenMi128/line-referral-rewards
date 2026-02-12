@@ -48,35 +48,70 @@ button { background:#06C755; color:white; border:none; cursor:pointer; }
 
 <script>
 const LIFF_ID = "2009103012-Cm3dsFrN";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx_QmVyErdSFBzTg3k_fV9tCflF8w2NAur9Xfbchcf7DnG2m8vFukn6pV1aH_MNoMqJSA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxlxK-9Ux2rgfOdfN4pWP0MoQd5n76qmsMctP3Esz4Dnc273tg934fqCNZlzrjrhG77SA/exec";
 const SOCIAL_URL = "https://lin.ee/Oo4hXKk";
 
 let currentUserId = "";
 let refLink = "";
+let campaign = "";
 
+// 取得 URL 參數
+function getUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    refUserId: urlParams.get("refUserId"),
+    campaign: urlParams.get("campaign")
+  };
+}
+
+// 初始化 LIFF
 async function init() {
   await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) { liff.login(); return; }
+
+  if (!liff.isLoggedIn()) {
+    // 登入前先存 URL 參數
+    const params = getUrlParams();
+    if (params.campaign) localStorage.setItem("campaign", params.campaign);
+    if (params.refUserId) localStorage.setItem("refUserId", params.refUserId);
+
+    liff.login();
+    return;
+  }
+
   const profile = await liff.getProfile();
   currentUserId = profile.userId;
-  checkMember();
+
+  // LIFF 登入後取 URL 或 localStorage
+  const params = getUrlParams();
+  campaign = params.campaign || localStorage.getItem("campaign") || "";
+  const refUserId = params.refUserId || localStorage.getItem("refUserId") || "";
+
+  checkMember(refUserId);
 }
 
-async function checkMember() {
+// 檢查會員
+async function checkMember(refUserId) {
   const res = await fetch(GAS_URL + "?userId=" + currentUserId);
   const data = await res.json();
-  if (data.isMember) { showMember(data.refUrl); }
-  else { document.getElementById("joinSection").style.display = "block"; }
+
+  if (data.isMember) {
+    showMember(data.refUrl);
+  } else {
+    document.getElementById("joinSection").style.display = "block";
+  }
 }
 
+// 顯示舊會員推薦區
 function showMember(url) {
   document.getElementById("memberSection").style.display = "block";
   document.getElementById("joinSection").style.display = "none";
+
   refLink = url;
   document.getElementById("qrImg").src =
     "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
 }
 
+// 提交新會員資料
 async function submitJoin() {
   const nm = document.getElementById("name").value.trim();
   const ph = document.getElementById("phone").value.trim();
@@ -87,10 +122,7 @@ async function submitJoin() {
   params.append("name", nm);
   params.append("phone", ph);
 
-  const urlParams = new URLSearchParams(location.search);
-  const refUserId = urlParams.get("refUserId");
-  const campaign = urlParams.get("campaign");
-
+  const refUserId = localStorage.getItem("refUserId");
   if (refUserId) params.append("refUserId", refUserId);
   if (campaign) params.append("campaign", campaign);
 
@@ -103,6 +135,7 @@ async function submitJoin() {
   } else { alert("發生錯誤，請稍後再試"); }
 }
 
+// 顯示社群彈窗
 function showSocialModal() { document.getElementById("socialModal").style.display = "flex"; }
 function openSocial() { liff.openWindow({ url: SOCIAL_URL, external:true }); }
 function copyLink() { navigator.clipboard.writeText(refLink); alert("推薦連結已複製"); }
